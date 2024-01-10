@@ -1,9 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "easy apply automater",
+  "name": "Easy Apply Automater",
   "version": "1.0",
+  "description": "Automate the easy apply process on LinkedIn job listings.",
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "36": "images/icon36.png",
+      "48": "images/icon48.png",
+      "64": "images/icon64.png",
+      "96": "images/icon96.png",
+      "128": "images/icon128.png"
+    }
   },
   "permissions": ["activeTab", "scripting"],
   "host_permissions": ["https://linkedin.com/*"],
@@ -11,6 +20,12 @@
     {
       "matches": ["https://linkedin.com/*"],
       "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["logo.png"],
+      "matches": ["<all_urls>"]
     }
   ]
 }
