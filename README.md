@@ -11,6 +11,7 @@ This Chrome extension streamlines the job application process on LinkedIn by aut
 #### Description
 
 `popup.html` is the user interface, presenting a button labeled "Easy Apply." When clicked, it triggers the automation process.
+![User Interface](usage/user_interface.png)
 
 ### 2. Popup.js
 
