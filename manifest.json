@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "easy apply automater",
+  "version": "1.0",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["https://linkedin.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://linkedin.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
