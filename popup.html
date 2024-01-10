@@ -1,11 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Apply Completion</title>
     <style>
       body {
         width: 300px;
         height: 200px;
         padding: 10px;
+        background-color: #f4f6f8; /* LinkedIn background color */
+        font-family: 'Helvetica Neue', Arial, sans-serif; /* LinkedIn font family */
+        color: #1c1e21; /* LinkedIn text color */
+      }
+
+      h1 {
+        color: #0077b5; /* LinkedIn blue color for headings */
+      }
+
+      p {
+        color: #1c1e21; /* LinkedIn text color */
+      }
+
+      button {
+        background-color: #0077b5; /* LinkedIn blue color for buttons */
+        color: #ffffff; /* White text color for buttons */
+        padding: 10px;
+        border: none;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #005e8b; /* Darker blue on hover */
       }
     </style>
   </head>
@@ -13,7 +39,6 @@
     <h1>Easy Apply Completion for currently selected job.</h1>
     <p>Click the button to go through autocomplete.</p>
     <button id="clickButton">Easy Apply</button>
-    <script src="popup.js"></script>    
-</script>
+    <script src="popup.js"></script>
   </body>
 </html>
