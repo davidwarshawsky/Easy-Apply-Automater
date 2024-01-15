@@ -173,6 +173,38 @@ function clickButtonOnPage() {
       }
     }
   }
+
+
+  function getRadioQuestions() {
+    return new Promise((resolve, reject) => {
+      var radioQuestionsDivs = document.querySelectorAll('div.jobs-easy-apply-form-section__grouping');
+      if (radioQuestionsDivs) {
+        for (const radioQuestionDiv of radioQuestionsDivs) {
+          var questionCSS = 'fieldset legend > span.fb-dash-form-element__label > span[aria-hidden="true"]';
+          var question = radioQuestionDiv.querySelector(questionCSS);
+          if (question) {
+            var questionText = question.textContent.trim();
+            console.log(questionText);
+          }
+          //   // get the radio buttons
+          //   var radioButtons = radioQuestionDiv.querySelectorAll('input[type="radio"]');
+          //   // for each radio button
+          //   for (const radioButton of radioButtons) {
+          //     // get the label
+          //     var label = radioButton.querySelector('label');
+          //     if (label) {
+          //       var labelText = label.textContent.trim();
+          //       console.log(labelText);
+          //     }
+          //   }
+        }
+        resolve();
+      } else {
+        // reject(new Error('Radio questions not found'));
+        resolve();
+      }
+    });
+  }
   
   async function applyForJob() {
     removeDismissedJobs();
@@ -184,6 +216,7 @@ function clickButtonOnPage() {
     }    
     while (true) {
       try {
+        await getRadioQuestions();
         await clickAndWait('button[aria-label="Continue to next step"]', 3000);
       } catch (error) {
         console.log('Continue button not found');
@@ -206,19 +239,8 @@ function clickButtonOnPage() {
       console.log('Submit button not found');
     }
   }
-  
+  function applyManyJobs() {
+  }
 
-  // function applyForJob() {
-  //     clickAndWait('.jobs-apply-button.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view', 1011)
-  //     .then(() => clickAndWait('button[aria-label="Continue to next step"]', 2000))
-  //     .then(() => clickAndWait('button[aria-label="Continue to next step"]', 2000))
-  //     .then(() => clickAndWait('button[aria-label="Review your application"]', 2000))
-  //     .then(() => uncheckCheckbox('#follow-company-checkbox'))
-  //     .then(() => clickAndWait('button[aria-label="Submit application"]', 2000))
-  //     .catch((error) => {
-  //       console.error('Error:', error);
-  //     });
-  // }
-  // run the function to apply for job
   applyForJob();
 }
