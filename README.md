@@ -1,4 +1,6 @@
 # Easy Apply Automater Chrome Extension
+### Tutorial 
+https://www.youtube.com/watch?v=rzBlQcF-I4E
 
 ## Description
 
