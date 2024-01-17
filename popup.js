@@ -96,7 +96,7 @@ function clickButtonOnPage() {
     });
   }
 
-  function pressDoneButton() {
+  function exitJob() {
     let attempts = 0;
     const maxAttempts = 16;
   
@@ -107,6 +107,12 @@ function clickButtonOnPage() {
         if (doneButton) {
           doneButton.click();
           clearInterval(intervalId); // Stop checking once the button is found and clicked
+        } else {
+          const dismissButton = document.querySelector('button.artdeco-modal__dismiss');
+          if (dismissButton) {
+            dismissButton.click();
+            clearInterval(intervalId); // Stop checking once the button is found and clicked
+          }
         }
       }
   
@@ -116,6 +122,8 @@ function clickButtonOnPage() {
       }
     }, 500); // Check every 500 milliseconds
   }
+
+
 
   function removeAppliedJobs() {
     // jobs are inside of div class="jobs-search-results-list"
@@ -201,7 +209,7 @@ function clickButtonOnPage() {
     try {
       uncheckCheckbox('#follow-company-checkbox');
       await clickAndWait('button[aria-label="Submit application"]', 3000);
-      pressDoneButton();
+      exitJob();
     } catch (error) {
       console.log('Submit button not found');
     }
