@@ -223,13 +223,14 @@ function clickButtonOnPage() {
         break; // Exit the loop if the "Continue to next step" button is not found
       }
     }
-  
-    try {
-      await clickAndWait('button[aria-label="Review your application"]', 3000);
-    } catch (error) {
-      console.log('Review button not found');
+    while (true){
+      try {
+        await clickAndWait('button[aria-label="Review your application"]', 3000);
+      } catch (error) {
+        console.log('Review button not found');
+        break; // Exit the loop if the "Review your application" button is not found
+      }
     }
-  
   
     try {
       uncheckCheckbox('#follow-company-checkbox');
