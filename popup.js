@@ -33,7 +33,6 @@ function clickButtonOnPage() {
     }
   }
 
-  // Function to print information about fieldsets
   function printRadioButtonQuestions() {
     // Get all <fieldset> elements on the page
     var fieldsetElements = document.querySelectorAll('fieldset');
@@ -50,13 +49,37 @@ function clickButtonOnPage() {
         // If the span is found, get its text content
         if (firstSpanWithAriaHidden) {
           var textContent = firstSpanWithAriaHidden.textContent.trim();
-          
+
           // Display the result for the current fieldset
           console.log('Fieldset:', textContent);
+
+          // Find all the input elements within the current fieldset
+          var inputElements = fieldset.querySelectorAll('input[data-test-text-selectable-option__input]');
+          
+          // Check if any input is selected
+          var isAnyInputSelected = false;
+          inputElements.forEach(function(input) {
+            // console.log(input.getAttribute('data-test-text-selectable-option__input'));
+            if (input.checked) {
+              isAnyInputSelected = true;
+            }
+          });
+
+          // If none of the inputs are selected, press the one with the attribute "i don't wish to answer"
+          if (!isAnyInputSelected) {
+            inputElements.forEach(function(input) {
+              var inputText = input.getAttribute('data-test-text-selectable-option__input');
+              if (inputText.toLowerCase() === "i don't wish to answer") {
+                input.click();
+              }
+            });
+          }
         }
       }
     });
   }
+
+
 
   function getFormPageName() {
     return new Promise((resolve, reject) => {
@@ -205,6 +228,65 @@ function clickButtonOnPage() {
       }
     });
   }
+
+  function extractQuestions() {
+    // Note race/ethnicity question is not extracted.
+    // span.inline-block.t-14.t-bold.mt4 "Race/Ethnicity*""
+    // div[data-test-text-selectable-option="0"] > input[data-test-text-selectable-option__input="I consent"]
+    // we want to go through each grouping var questionDivs = document.querySelectorAll('div.jobs-easy-apply-form-section__grouping');
+    var questionDivs = document.querySelectorAll('div.jobs-easy-apply-form-section__grouping');
+    
+    // Extract questions from legend elements
+    var legendQuestions = document.querySelectorAll('legend span[data-test-form-builder-radio-button-form-component__title] span[aria-hidden="true"]');
+    legendQuestions.forEach(function (legendQuestion) {
+      console.log('Legend Question:', legendQuestion.textContent.trim());
+    });
+  
+    // Extract questions from text entity list form components (dropdowns)
+    questionDivs.forEach(function (questionDiv) {
+      // Extract questions from single-line text form components
+      var textInputElements = questionDiv.querySelectorAll('div.fb-dash-form-element[data-test-form-element] label[for^="single-line-text-form-component"]');
+      textInputElements.forEach(function (textInputElement) {
+        var labelText = textInputElement.textContent.trim();
+        console.log('Text Input Question:', labelText);
+        var inputBox = document.querySelector('input.artdeco-text-input--input');
+        if (inputBox) {
+          var inputValue = inputBox.value;
+          if (inputValue === '') {
+            var newInputValue = prompt('Please enter a value:\n' + labelText);
+            if (newInputValue !== null) {
+              inputBox.value = newInputValue;
+            }
+          }
+          console.log('Current Value:', inputBox.value);
+        }
+      });
+      var dropdownLabels = questionDiv.querySelectorAll('.fb-dash-form-element[data-test-form-element] label[for^="text-entity-list-form-component"]');
+      if (dropdownLabels.length > 0) {
+        dropdownLabels.forEach(function (label) {
+          var labelText = label.textContent.trim();
+          // Split the string in half based on the length
+          var splitIndex = Math.floor(labelText.length / 2);
+          var labelText = labelText.substring(0, splitIndex).trim();
+      
+          console.log('Dropdown Question:', labelText);
+          var multipleChoiceSelector = questionDiv.querySelector('select');
+          if (multipleChoiceSelector) {
+            var multipleChoiceOptions = multipleChoiceSelector.querySelectorAll('option');
+            multipleChoiceOptions.forEach(function (multipleChoiceOption) {
+              var multipleChoiceOptionText = multipleChoiceOption.textContent.trim();
+              console.log('Multiple Choice Option:', multipleChoiceOptionText);
+              if (multipleChoiceOption.selected) {
+                console.log('Selected Option:', multipleChoiceOptionText);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+  
+
   
   async function applyForJob() {
     removeDismissedJobs();
@@ -243,5 +325,8 @@ function clickButtonOnPage() {
   function applyManyJobs() {
   }
 
-  applyForJob();
+  // applyForJob();
+  // extractQuestions();
+  printRadioButtonQuestions();
+  
 }
