@@ -42,51 +42,6 @@ function clickButtonOnPage() {
     }
   }
 
-  function printRadioButtonQuestions() {
-    // Get all <fieldset> elements on the page
-    var fieldsetElements = document.querySelectorAll('fieldset');
-
-    // Iterate through each <fieldset>
-    fieldsetElements.forEach(function(fieldset) {
-      // Find the <legend> element within the current <fieldset>
-      var legendElement = fieldset.querySelector('legend');
-
-      // If <legend> exists, find the first <span> with aria-hidden="true"
-      if (legendElement) {
-        var firstSpanWithAriaHidden = legendElement.querySelector('span[aria-hidden="true"]');
-
-        // If the span is found, get its text content
-        if (firstSpanWithAriaHidden) {
-          var textContent = firstSpanWithAriaHidden.textContent.trim();
-
-          // Display the result for the current fieldset
-          console.log('Fieldset:', textContent);
-
-          // Find all the input elements within the current fieldset
-          var inputElements = fieldset.querySelectorAll('input[data-test-text-selectable-option__input]');
-          
-          // Check if any input is selected
-          var isAnyInputSelected = false;
-          inputElements.forEach(function(input) {
-            // console.log(input.getAttribute('data-test-text-selectable-option__input'));
-            if (input.checked) {
-              isAnyInputSelected = true;
-            }
-          });
-
-          // If none of the inputs are selected, press the one with the attribute "i don't wish to answer"
-          if (!isAnyInputSelected) {
-            inputElements.forEach(function(input) {
-              var inputText = input.getAttribute('data-test-text-selectable-option__input');
-              if (inputText.toLowerCase() === "i don't wish to answer") {
-                input.click();
-              }
-            });
-          }
-        }
-      }
-    });
-  }
 
 
 
@@ -128,31 +83,24 @@ function clickButtonOnPage() {
     });
   }
 
-  function exitJob() {
+  function pressWithRetry(selector) {
     let attempts = 0;
     const maxAttempts = 16;
-  
+
     const intervalId = setInterval(() => {
-      if (document.querySelector('h2#post-apply-modal')) {
-        const buttons = document.querySelectorAll('button span.artdeco-button__text');
-        const doneButton = Array.from(buttons).find(button => button.textContent.trim() === 'Done');
-        if (doneButton) {
-          doneButton.click();
-          clearInterval(intervalId); // Stop checking once the button is found and clicked
-        } else {
-          const dismissButton = document.querySelector('button.artdeco-modal__dismiss');
-          if (dismissButton) {
-            dismissButton.click();
-            clearInterval(intervalId); // Stop checking once the button is found and clicked
-          }
+      var button = document.querySelector(selector);
+      if (button) {
+        button.click();
+        clearInterval(intervalId); // Stop checking once the button is found and clicked
+        return true;
+      } else {
+        attempts++;
+        if (attempts >= maxAttempts) {
+          clearInterval(intervalId); // Stop checking after 16 unsuccessful attempts
         }
       }
-  
-      attempts++;
-      if (attempts >= maxAttempts) {
-        clearInterval(intervalId); // Stop checking after 16 unsuccessful attempts
-      }
     }, 500); // Check every 500 milliseconds
+    return false;
   }
 
 
@@ -207,6 +155,16 @@ function clickButtonOnPage() {
       }
     }
   }
+
+// if (!isAnyInputSelected) {
+//   inputElements.forEach(function(input) {
+//     var inputText = input.getAttribute('data-test-text-selectable-option__input');
+//     if (inputText.toLowerCase() === "i don't wish to answer") {
+//       input.click();
+//     }
+//   });
+// }
+
 
 
   async function processQuestions(selector) {
@@ -378,62 +336,104 @@ function clickButtonOnPage() {
       });
     }    
   
-  
+  function exitJob() {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 16;
 
-  
+      const intervalId = setInterval(() => {
+        if (document.querySelector('h2#post-apply-modal')) {
+          const buttons = document.querySelectorAll('button span.artdeco-button__text');
+          const doneButton = Array.from(buttons).find(button => button.textContent.trim() === 'Done');
+          if (doneButton) {
+            doneButton.click();
+            clearInterval(intervalId); // Stop checking once the button is found and clicked
+            resolve(); // Resolve the promise after clicking the "Done" button
+          } else {
+            const dismissButton = document.querySelector('button.artdeco-modal__dismiss');
+            if (dismissButton) {
+              dismissButton.click();
+              clearInterval(intervalId); // Stop checking once the button is found and clicked
+              resolve(); // Resolve the promise after clicking the dismiss button
+            }
+          }
+        }
+
+        attempts++;
+        if (attempts >= maxAttempts) {
+          clearInterval(intervalId); // Stop checking after 16 unsuccessful attempts
+          resolve(); // Resolve the promise if the button is not found after the maximum attempts
+        }
+      }, 500); // Check every 500 milliseconds
+    });
+  }
+
   async function applyForJob() {
-    dismissJobsApplied();
-    removeDismissedJobs();
-    removeAppliedJobs();
-    try {
-      await clickAndWait('.jobs-apply-button.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view', 1011);
-    } catch (error) {
-      console.log('Apply button not found');
-    }    
-    while (true) {
-      try{
-        await processQuestions('div.jobs-easy-apply-form-section__grouping');
-      }catch (error) {
-        console.log('Questions not found');
-      }
+    return new Promise(async (resolve) => {
+      dismissJobsApplied();
+      removeDismissedJobs();
+      removeAppliedJobs();
       try {
-        // await getRadioQuestions();
-        // await extractQuestions();
-        await clickAndWait('button[aria-label="Continue to next step"]', 3000);
+        await clickAndWait('.jobs-apply-button.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view', 5011);
+        // pressWithRetry('.jobs-apply-button.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view');
       } catch (error) {
-        console.log('Continue button not found');
-        break; // Exit the loop if the "Continue to next step" button is not found
+        console.log('Apply button not found');
       }
-    }
-    while (true){
-      try{
-        await processQuestions('div.jobs-easy-apply-form-section__grouping');
-      }catch (error) {
-        console.log('Questions not found');
+      while (true) {
+        try {
+          await processQuestions('div.jobs-easy-apply-form-section__grouping');
+        } catch (error) {
+          console.log('Questions not found');
+        }
+        try {
+          await clickAndWait('button[aria-label="Continue to next step"]', 3000);
+        } catch (error) {
+          console.log('Continue button not found');
+          break; // Exit the loop if the "Continue to next step" button is not found
+        }
       }
+      while (true) {
+        try {
+          await processQuestions('div.jobs-easy-apply-form-section__grouping');
+        } catch (error) {
+          console.log('Questions not found');
+        }
+        try {
+          await clickAndWait('button[aria-label="Review your application"]', 3000);
+        } catch (error) {
+          console.log('Review button not found');
+          break; // Exit the loop if the "Review your application" button is not found
+        }
+      }
+
       try {
-        // await extractQuestions();
-        await clickAndWait('button[aria-label="Review your application"]', 3000);
+        uncheckCheckbox('#follow-company-checkbox');
+        await clickAndWait('button[aria-label="Submit application"]', 3000);
+        await exitJob(); // Wait for exitJob to complete before resolving the promise
       } catch (error) {
-        console.log('Review button not found');
-        break; // Exit the loop if the "Review your application" button is not found
+        console.log('Submit button not found');
       }
-    }
-  
-    try {
-      uncheckCheckbox('#follow-company-checkbox');
-      await clickAndWait('button[aria-label="Submit application"]', 3000);
-      exitJob();
-    } catch (error) {
-      console.log('Submit button not found');
+      resolve();
+    });
+  }
+
+  async function applyForAllJobs() {
+    var jobsList = document.querySelector('div.jobs-search-results-list');
+    if (jobsList) {
+      var jobCards = jobsList.querySelectorAll('div.job-card-container--clickable');
+      if (jobCards) {
+        for (const jobCard of jobCards) {
+          jobCard.click();
+          await applyForJob();
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+      }
     }
   }
-  // function applyManyJobs() {
-  // }
-
-  applyForJob();
-  // extractQuestions();
-  // printRadioButtonQuestions();
-
   
+  dismissJobsApplied();
+  removeDismissedJobs();
+  removeAppliedJobs();
+  applyForAllJobs();
 }
+  
