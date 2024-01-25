@@ -1,3 +1,12 @@
+      // div.fb-dash-form-element[data-test-form-element] label[for^="single-typeahead-entity-form-component"]
+  //     <div id="single-typeahead-entity-form-component-formElement-urn-li-jobs-applyformcommon-easyApplyFormElement-3788477971-9054483911573926553-city-HOME-CITY-ta" class="search-basic-typeahead search-vertical-typeahead">
+  // <!---->        
+      
+  //     <input id="single-typeahead-entity-form-component-formElement-urn-li-jobs-applyformcommon-easyApplyFormElement-3788477971-9054483911573926553-city-HOME-CITY" required="" role="combobox" aria-autocomplete="list" aria-activedescendant="" aria-expanded="false" type="text" aria-describedby="single-typeahead-entity-form-component-formElement-urn-li-jobs-applyformcommon-easyApplyFormElement-3788477971-9054483911573926553-city-HOME-CITY-error">
+    
+  // <!---->  
+  //     </div>
+
 document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('clickButton').addEventListener('click', () => {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
@@ -199,41 +208,55 @@ function clickButtonOnPage() {
     }
   }
 
-  function extractQuestions() {
-    var questionDivs = document.querySelectorAll('div.jobs-easy-apply-form-section__grouping');
-    // div.fb-dash-form-element[data-test-form-element] label[for^="single-typeahead-entity-form-component"]
-//     <div id="single-typeahead-entity-form-component-formElement-urn-li-jobs-applyformcommon-easyApplyFormElement-3788477971-9054483911573926553-city-HOME-CITY-ta" class="search-basic-typeahead search-vertical-typeahead">
-// <!---->        
-    
-//     <input id="single-typeahead-entity-form-component-formElement-urn-li-jobs-applyformcommon-easyApplyFormElement-3788477971-9054483911573926553-city-HOME-CITY" required="" role="combobox" aria-autocomplete="list" aria-activedescendant="" aria-expanded="false" type="text" aria-describedby="single-typeahead-entity-form-component-formElement-urn-li-jobs-applyformcommon-easyApplyFormElement-3788477971-9054483911573926553-city-HOME-CITY-error">
+
+  async function processQuestions(selector) {
+    const questionDivs = document.querySelectorAll(selector);
   
-// <!---->  
-//     </div>
-    questionDivs.forEach(function (questionDiv) {
-      // handles text input questions
-      var textInputElement = questionDiv.querySelector('div.fb-dash-form-element[data-test-form-element] label[for^="single-line-text-form-component"]');
-      if (textInputElement) {
-        var labelText = textInputElement.textContent.trim();
-        console.log('Text Input Question:', labelText);
-        var inputBox = questionDiv.querySelector('input.artdeco-text-input--input');
-        if (inputBox) {
-          var inputValue = inputBox.value;
-          if (inputValue === '' || inputValue === null) {
-            var newInputValue = prompt('Please enter a value:\n' + labelText);
-            inputBox.value = parseInt(newInputValue, 10);
-            // Trigger input event to simulate user input
-            var inputEvent = new Event('input', { bubbles: true });
-            inputBox.dispatchEvent(inputEvent);
-          }
+    for (const questionDiv of questionDivs) {
+      try {
+        await extractQuestion(questionDiv);
+      } catch (error) {
+        console.error('Error processing question:', error);
+      }
+    }
+  }
+  // return new Promise((resolve) => {
+    // var questionDivs = document.querySelectorAll('div.jobs-easy-apply-form-section__grouping');
+    // questionDivs.forEach(async function (questionDiv) {
+  
+    async function extractQuestion(questionDiv) {
+      return new Promise(async (resolve) => {
+        // handles text input questions
+        var textInputElement = questionDiv.querySelector('div.fb-dash-form-element[data-test-form-element] label[for^="single-line-text-form-component"]');
+        if (textInputElement) {
+          var labelText = textInputElement.textContent.trim();
+          console.log('Text Input Question:', labelText);
+          var inputBox = questionDiv.querySelector('input.artdeco-text-input--input');
+          if (inputBox) {
+            var inputValue = inputBox.value;
+            if (inputValue === '' || inputValue === null) {
+              var newInputValue = prompt('Please enter a value:\n' + labelText);
+              inputBox.value = parseInt(newInputValue, 10);
+              // Trigger input event to simulate user input
+              var inputEvent = new Event('input', { bubbles: true });
+              inputBox.dispatchEvent(inputEvent);
+            }
           }
           console.log('Current Value:', inputBox.value);
-      }
-      // handles radio questions
-      var fieldset = questionDiv.querySelector('fieldset');
-      if (fieldset) {
-        var legendElement = fieldset.querySelector('legend span[aria-hidden="true"]');
-        if (legendElement) {
-          var textContent = legendElement.textContent.trim();
+        }
+        // handles radio questions
+        var fieldset = questionDiv.querySelector('fieldset');
+        if (fieldset) {
+          var legendElement = fieldset.querySelector('legend span[aria-hidden="true"]');
+          if (legendElement) {
+            var textContent = legendElement.textContent.trim();
+          } else if (fieldset.parentElement.parentElement.parentElement.children[1].classList.contains('inline-block', 't-14', 't-bold', 'mt4')) {
+            console.log('Inside of fieldset with ')
+            var spanChildren = Array.from(fieldset.parentElement.parentElement.parentElement.children).slice(1, 3);
+            var textContent = spanChildren.map(function (span) {
+              return span.textContent.trim();
+            }).join('\n');
+          }
           console.log('Radio Question:', textContent);
           var inputElements = fieldset.querySelectorAll('input[data-test-text-selectable-option__input]');
           var isAnyInputSelected = false;
@@ -243,7 +266,7 @@ function clickButtonOnPage() {
               isAnyInputSelected = true;
             }
           });
-  
+    
           if (!isAnyInputSelected) {
             var options = [];
             inputElements.forEach(function (input) {
@@ -268,84 +291,92 @@ function clickButtonOnPage() {
             // Open the popup.html in a new window
             var popupWindow = window.open('', '', 'width=400,height=300');
             popupWindow.document.write(popupHTML);
+    
             // Add event listener to handle option selection
-            popupWindow.document.addEventListener('click', function(event) {
-              var selectedInput = event.target.closest('input[type="radio"]');
-              if (selectedInput) {
-                var selectedOption = selectedInput.value;
-                inputElements.forEach(function (input) {
-                  if (input.getAttribute('data-test-text-selectable-option__input') === selectedOption) {
-                    input.checked = true;
-                    input.click(); // Trigger click event on the original input
-                  }
-                });
-                // Close the popup window
-                popupWindow.close();
-              }
-            });
-          }
-        }
-      }
-  
-      // handles dropdown questions
-      var dropdownLabels = questionDiv.querySelectorAll('.fb-dash-form-element[data-test-form-element] label[for^="text-entity-list-form-component"]');
-      dropdownLabels.forEach(function (label) {
-        var labelText = label.textContent.trim();
-        var splitIndex = Math.floor(labelText.length / 2);
-        labelText = labelText.substring(0, splitIndex).trim();
-        console.log('Dropdown Question:', labelText);
-        var multipleChoiceSelector = questionDiv.querySelector('select');
-        if (multipleChoiceSelector) {
-          var multipleChoiceOptions = multipleChoiceSelector.querySelectorAll('option');
-          var selectedOption = multipleChoiceSelector.value.toLowerCase();
-          if (selectedOption === 'select an option' || selectedOption === '') {
-            var options = [];
-            multipleChoiceOptions.forEach(function (multipleChoiceOption) {
-              var multipleChoiceOptionText = multipleChoiceOption.textContent.trim();
-              if (multipleChoiceOptionText.toLowerCase() !== 'select an option' && multipleChoiceOptionText !== '') {
-                options.push(multipleChoiceOptionText);
-              }
-            });
-            // Create popup.html with question and options
-            var popupHTML = `
-              <h3>${labelText}</h3>
-              <ul>
-                ${options.map(option => `
-                  <li>
-                    <div style="border: 1px solid black; padding: 5px; margin-bottom: 5px;" data-option="${option}">
-                      <label>
-                        <input type="radio" name="${labelText}" value="${option}" />
-                        ${option}
-                      </label>
-                    </div>
-                  </li>
-                `).join('')}
-              </ul>
-            `;
-            // Open the popup.html in a new window
-            var popupWindow = window.open('', '', 'width=400,height=300');
-            popupWindow.document.write(popupHTML);
-            // Add event listener to handle option selection
-            popupWindow.document.addEventListener('click', function(event) {
-              var selectedDiv = event.target.closest('div[data-option]');
-              if (selectedDiv) {
-                var selectedInput = selectedDiv.querySelector('input[type="radio"]');
+            await new Promise((resolve) => {
+              popupWindow.document.addEventListener('click', function (event) {
+                var selectedInput = event.target.closest('input[type="radio"]');
                 if (selectedInput) {
                   var selectedOption = selectedInput.value;
-                  multipleChoiceSelector.value = selectedOption;
-                  // Trigger change event on the original select element
-                  var changeEvent = new Event('change');
-                  multipleChoiceSelector.dispatchEvent(changeEvent);
-                  // Close the popup window
+                  inputElements.forEach(function (input) {
+                    if (input.getAttribute('data-test-text-selectable-option__input') === selectedOption) {
+                      input.checked = true;
+                      var changeEvent = new Event('change', { bubbles: true });
+                      input.parentElement.children[0].dispatchEvent(changeEvent);
+                    }
+                  });
+                  // Close the popup window after handling selection
                   popupWindow.close();
+                  resolve();
                 }
-              }
+              });
             });
           }
         }
+        // handles dropdown questions
+        var dropdownLabels = questionDiv.querySelectorAll('.fb-dash-form-element[data-test-form-element] label[for^="text-entity-list-form-component"]');
+        for (const label of dropdownLabels) {
+          var labelText = label.textContent.trim();
+          var splitIndex = Math.floor(labelText.length / 2);
+          labelText = labelText.substring(0, splitIndex).trim();
+          console.log('Dropdown Question:', labelText);
+          var multipleChoiceSelector = questionDiv.querySelector('select');
+          if (multipleChoiceSelector) {
+            var multipleChoiceOptions = multipleChoiceSelector.querySelectorAll('option');
+            var selectedOption = multipleChoiceSelector.value.toLowerCase();
+            if (selectedOption === 'select an option' || selectedOption === '') {
+              var options = [];
+              multipleChoiceOptions.forEach(function (multipleChoiceOption) {
+                var multipleChoiceOptionText = multipleChoiceOption.textContent.trim();
+                if (multipleChoiceOptionText.toLowerCase() !== 'select an option' && multipleChoiceOptionText !== '') {
+                  options.push(multipleChoiceOptionText);
+                }
+              });
+              // Create popup.html with question and options
+              var popupHTML = `
+                <h3>${labelText}</h3>
+                <ul>
+                  ${options.map(option => `
+                    <li>
+                      <div style="border: 1px solid black; padding: 5px; margin-bottom: 5px;" data-option="${option}">
+                        <label>
+                          <input type="radio" name="${labelText}" value="${option}" />
+                          ${option}
+                        </label>
+                      </div>
+                    </li>
+                  `).join('')}
+                </ul>
+              `;
+              // Open the popup.html in a new window
+              var popupWindow = window.open('', '', 'width=400,height=300');
+              popupWindow.document.write(popupHTML);
+    
+              // Add event listener to handle option selection
+              await new Promise((resolve) => {
+                popupWindow.document.addEventListener('click', function (event) {
+                  var selectedDiv = event.target.closest('div[data-option]');
+                  if (selectedDiv) {
+                    var selectedInput = selectedDiv.querySelector('input[type="radio"]');
+                    if (selectedInput) {
+                      var selectedOption = selectedInput.value;
+                      multipleChoiceSelector.value = selectedOption;
+                      // Trigger change event on the original select element
+                      var changeEvent = new Event('change');
+                      multipleChoiceSelector.dispatchEvent(changeEvent);
+                      // Close the popup window after handling selection
+                      popupWindow.close();
+                      resolve();
+                    }
+                  }
+                });
+              });
+            }
+          }
+        }
+        resolve();
       });
-    });
-  }
+    }    
   
   
 
@@ -360,9 +391,14 @@ function clickButtonOnPage() {
       console.log('Apply button not found');
     }    
     while (true) {
+      try{
+        await processQuestions('div.jobs-easy-apply-form-section__grouping');
+      }catch (error) {
+        console.log('Questions not found');
+      }
       try {
         // await getRadioQuestions();
-        extractQuestions();
+        // await extractQuestions();
         await clickAndWait('button[aria-label="Continue to next step"]', 3000);
       } catch (error) {
         console.log('Continue button not found');
@@ -370,8 +406,13 @@ function clickButtonOnPage() {
       }
     }
     while (true){
+      try{
+        await processQuestions('div.jobs-easy-apply-form-section__grouping');
+      }catch (error) {
+        console.log('Questions not found');
+      }
       try {
-        extractQuestions();
+        // await extractQuestions();
         await clickAndWait('button[aria-label="Review your application"]', 3000);
       } catch (error) {
         console.log('Review button not found');
@@ -387,8 +428,8 @@ function clickButtonOnPage() {
       console.log('Submit button not found');
     }
   }
-  function applyManyJobs() {
-  }
+  // function applyManyJobs() {
+  // }
 
   applyForJob();
   // extractQuestions();
