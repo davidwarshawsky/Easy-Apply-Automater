@@ -19,143 +19,120 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function clickButtonOnPage() {
-  function clickAndWait(buttonSelector, delay) {
-    return new Promise((resolve,reject) => {
+  async function clickAndWait(buttonSelector, waitTime) {
       // printRadioButtonQuestions();
       var button = document.querySelector(buttonSelector);
       if (button) {
-        button.click();
-        setTimeout(resolve, delay);
+        button.dispatchEvent(new Event('click', { bubbles: true })); // Trigger the click event and allow it to bubble up the DOM
+        await delay(waitTime)
       } else {
         console.log(`Button '${buttonSelector}' not found`);
         reject(new Error(`Button '${buttonSelector}' not found`)); // Reject the promise if the button is not found}
       }
+  }
+
+  function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+
+  async function pressWithRetry(selector, delayTime = 500, waitTime = 3000) {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const maxAttempts = 16;
+
+      const intervalId = setInterval(async () => {
+        var button = document.querySelector(selector);
+        if (button) {
+          button.click();
+          button.dispatchEvent(new Event('click', { bubbles: true })); // Trigger the click event and allow it to bubble up the DOM
+          clearInterval(intervalId); // Stop checking once the button is found and clicked
+          await delay(waitTime);
+        } else {
+          attempts++;
+          if (attempts >= maxAttempts) {
+            clearInterval(intervalId); // Stop checking after 16 unsuccessful attempts
+          }
+        }
+      }, delayTime); // Check every 500 milliseconds
+      resolve();
     });
   }
 
   function uncheckCheckbox(checkboxSelector) {
-    var checkbox = document.querySelector(checkboxSelector);
-    if (checkbox) {
-      checkbox.checked = false;
-    } else {
-      console.log(`Checkbox '${checkboxSelector}' not found`);
-    }
-  }
-
-
-
-
-  function getFormPageName() {
-    return new Promise((resolve, reject) => {
-      // Find the first <div> with class "ph5"
-      var ph5Element = document.querySelector('div.ph5:not([class*=" "])');
-  
-      // If <div> with class "ph5" exists, find the first <div> with class "pb4" inside it
-      if (ph5Element) {
-        console.log("GOT to ph5");
-        var pb4Element = ph5Element.querySelector('div.pb4:not([class*=" "])');
-  
-        // If <div> with class "pb4" exists, find the first <h3> with class "t-16 t-bold" inside it
-        if (pb4Element) {
-          console.log("GOT to pb4");
-          var h3Element = pb4Element.querySelector('h3.t-16.t-bold');
-  
-          // If <h3> with class "t-16 t-bold" exists, get its text content
-          if (h3Element) {
-            console.log("GOT to h3");
-            var textContent = h3Element.textContent.trim();
-  
-            // Display the result
-            console.log('Form Page Name:', textContent);
-            resolve(textContent); // Resolve the promise with the value
-          } else {
-            console.log('Structure not found: h3');
-            reject('Structure not found: h3');
-          }
-        } else {
-          console.log('Structure not found: pb4');
-          reject('Structure not found: pb4');
-        }
+    return new Promise((resolve) => {
+      var checkbox = document.querySelector(checkboxSelector);
+      if (checkbox) {
+        checkbox.checked = false;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true })); // Trigger the change event and allow it to bubble up the DOM
       } else {
-        console.log('Structure not found: ph5');
-        reject('Structure not found: ph5');
+        console.log(`Checkbox '${checkboxSelector}' not found`);
       }
+      resolve();
     });
   }
 
-  function pressWithRetry(selector) {
-    let attempts = 0;
-    const maxAttempts = 16;
-
-    const intervalId = setInterval(() => {
-      var button = document.querySelector(selector);
-      if (button) {
-        button.click();
-        clearInterval(intervalId); // Stop checking once the button is found and clicked
-        return true;
-      } else {
-        attempts++;
-        if (attempts >= maxAttempts) {
-          clearInterval(intervalId); // Stop checking after 16 unsuccessful attempts
-        }
-      }
-    }, 500); // Check every 500 milliseconds
-    return false;
-  }
 
 
 
   function removeAppliedJobs() {
-    var jobsList = document.querySelector('div.jobs-search-results-list');
-    if (jobsList) {
-      var jobCards = jobsList.querySelectorAll('div.job-card-container--clickable');
-      if (jobCards) {
-        jobCards.forEach(function(jobCard) {
-          var jobCardStatus = jobCard.querySelector('ul.job-card-list__footer-wrapper li.job-card-container__footer-job-state');
-          if (jobCardStatus) {
-            var jobCardStatusText = jobCardStatus.textContent.trim();
-            if (jobCardStatusText === 'Applied') {
-              jobCard.remove();
+    return new Promise((resolve) => {
+      var jobsList = document.querySelector('div.jobs-search-results-list');
+      if (jobsList) {
+        var jobCards = jobsList.querySelectorAll('div.job-card-container--clickable');
+        if (jobCards) {
+          jobCards.forEach(function(jobCard) {
+            var jobCardStatus = jobCard.querySelector('ul.job-card-list__footer-wrapper li.job-card-container__footer-job-state');
+            if (jobCardStatus) {
+              var jobCardStatusText = jobCardStatus.textContent.trim();
+              if (jobCardStatusText === 'Applied') {
+                jobCard.remove();
+              }
             }
-          }
-        });
+          });
+        }
       }
-    }
+      resolve();
+    });
   }
 
   function removeDismissedJobs() {
-    var jobsList = document.querySelector('div.jobs-search-results-list');
-    if (jobsList) {
-      var dismissedJobCards = jobsList.querySelectorAll('div.job-card-container--clickable.job-card-list--is-dismissed');
-      if (dismissedJobCards) {
-        dismissedJobCards.forEach(function(jobCard) {
-          jobCard.remove();
-        });
+    return new Promise((resolve) => {
+      var jobsList = document.querySelector('div.jobs-search-results-list');
+      if (jobsList) {
+        var dismissedJobCards = jobsList.querySelectorAll('div.job-card-container--clickable.job-card-list--is-dismissed');
+        if (dismissedJobCards) {
+          dismissedJobCards.forEach(function(jobCard) {
+            jobCard.remove();
+          });
+        }
       }
-    }
+    });
   }
 
   function dismissJobsApplied(){
-    var jobsList = document.querySelector('div.jobs-search-results-list');
-    if (jobsList) {
-      var jobCards = jobsList.querySelectorAll('div.job-card-container--clickable');
-      if (jobCards) {
-        jobCards.forEach(function(jobCard) {
-          var jobCardStatus = jobCard.querySelector('ul.job-card-list__footer-wrapper li.job-card-container__footer-job-state');
-          if (jobCardStatus) {
-            var jobCardStatusText = jobCardStatus.textContent.trim();
-            if (jobCardStatusText === 'Applied') {
-              var dismissButton = jobCard.querySelector('button[aria-label="Dismiss job"]');
-              if (dismissButton) {
-                dismissButton.click();
+    return new Promise((resolve) => {
+      var jobsList = document.querySelector('div.jobs-search-results-list');
+      if (jobsList) {
+        var jobCards = jobsList.querySelectorAll('div.job-card-container--clickable');
+        if (jobCards) {
+          jobCards.forEach(function(jobCard) {
+            var jobCardStatus = jobCard.querySelector('ul.job-card-list__footer-wrapper li.job-card-container__footer-job-state');
+            if (jobCardStatus) {
+              var jobCardStatusText = jobCardStatus.textContent.trim();
+              if (jobCardStatusText === 'Applied') {
+                var dismissButton = jobCard.querySelector('button[aria-label="Dismiss job"]');
+                if (dismissButton) {
+                  dismissButton.click();
+                }
               }
             }
-          }
-        });
+          });
+        }
       }
-    }
+      
+    });
   }
-
 // if (!isAnyInputSelected) {
 //   inputElements.forEach(function(input) {
 //     var inputText = input.getAttribute('data-test-text-selectable-option__input');
@@ -164,9 +141,6 @@ function clickButtonOnPage() {
 //     }
 //   });
 // }
-
-
-
   async function processQuestions(selector) {
     const questionDivs = document.querySelectorAll(selector);
   
@@ -182,165 +156,167 @@ function clickButtonOnPage() {
     // var questionDivs = document.querySelectorAll('div.jobs-easy-apply-form-section__grouping');
     // questionDivs.forEach(async function (questionDiv) {
   
-    async function extractQuestion(questionDiv) {
-      return new Promise(async (resolve) => {
-        // handles text input questions
-        var textInputElement = questionDiv.querySelector('div.fb-dash-form-element[data-test-form-element] label[for^="single-line-text-form-component"]');
-        if (textInputElement) {
-          var labelText = textInputElement.textContent.trim();
-          console.log('Text Input Question:', labelText);
-          var inputBox = questionDiv.querySelector('input.artdeco-text-input--input');
-          if (inputBox) {
-            var inputValue = inputBox.value;
-            if (inputValue === '' || inputValue === null) {
+  async function extractQuestion(questionDiv) {
+    // handles text input questions
+    var textInputElement = questionDiv.querySelector('div.fb-dash-form-element[data-test-form-element] label[for^="single-line-text-form-component"]');
+    if (textInputElement) {
+      var labelText = textInputElement.textContent.trim();
+      console.log('Text Input Question:', labelText);
+      var inputBox = questionDiv.querySelector('input.artdeco-text-input--input');
+      if (inputBox) {
+        var inputValue = inputBox.value;
+        if (inputValue === '' || inputValue === null) {
+          await new Promise((resolve) => {
+            setTimeout(() => {
               var newInputValue = prompt('Please enter a value:\n' + labelText);
               inputBox.value = parseInt(newInputValue, 10);
               // Trigger input event to simulate user input
               var inputEvent = new Event('input', { bubbles: true });
               inputBox.dispatchEvent(inputEvent);
-            }
-          }
-          console.log('Current Value:', inputBox.value);
+              resolve();
+            }, 0);
+          });
         }
-        // handles radio questions
-        var fieldset = questionDiv.querySelector('fieldset');
-        if (fieldset) {
-          var legendElement = fieldset.querySelector('legend span[aria-hidden="true"]');
-          if (legendElement) {
-            var textContent = legendElement.textContent.trim();
-          } else if (fieldset.parentElement.parentElement.parentElement.children[1].classList.contains('inline-block', 't-14', 't-bold', 'mt4')) {
-            console.log('Inside of fieldset with ')
-            var spanChildren = Array.from(fieldset.parentElement.parentElement.parentElement.children).slice(1, 3);
-            var textContent = spanChildren.map(function (span) {
-              return span.textContent.trim();
-            }).join('\n');
-          }
-          console.log('Radio Question:', textContent);
-          var inputElements = fieldset.querySelectorAll('input[data-test-text-selectable-option__input]');
-          var isAnyInputSelected = false;
-          inputElements.forEach(function (input) {
-            console.log(textContent + "\noption: ", input.getAttribute('data-test-text-selectable-option__input'));
-            if (input.checked) {
-              isAnyInputSelected = true;
+      }
+      console.log('Current Value:', inputBox.value);
+    }
+    // handles radio questions
+    var fieldset = questionDiv.querySelector('fieldset');
+    if (fieldset) {
+      var legendElement = fieldset.querySelector('legend span[aria-hidden="true"]');
+      if (legendElement) {
+        var textContent = legendElement.textContent.trim();
+      } else if (fieldset.parentElement.parentElement.parentElement.children[1].classList.contains('inline-block', 't-14', 't-bold', 'mt4')) {
+        console.log('Inside of fieldset with ')
+        var spanChildren = Array.from(fieldset.parentElement.parentElement.parentElement.children).slice(1, 3);
+        var textContent = spanChildren.map(function (span) {
+          return span.textContent.trim();
+        }).join('\n');
+      }
+      console.log('Radio Question:', textContent);
+      var inputElements = fieldset.querySelectorAll('input[data-test-text-selectable-option__input]');
+      var isAnyInputSelected = false;
+      inputElements.forEach(function (input) {
+        console.log(textContent + "\noption: ", input.getAttribute('data-test-text-selectable-option__input'));
+        if (input.checked) {
+          isAnyInputSelected = true;
+        }
+      });
+
+      if (!isAnyInputSelected) {
+        var options = [];
+        inputElements.forEach(function (input) {
+          options.push(input.getAttribute('data-test-text-selectable-option__input'));
+        });
+        // Create popup.html with question and options
+        var popupHTML = `
+          <h3>${textContent}</h3>
+          <ul>
+            ${options.map(option => `
+              <li>
+                <div style="border: 1px solid black; padding: 5px; margin-bottom: 5px;">
+                  <label>
+                    <input type="radio" name="${textContent}" value="${option}" />
+                    ${option}
+                  </label>
+                </div>
+              </li>
+            `).join('')}
+          </ul>
+        `;
+        // Open the popup.html in a new window
+        var popupWindow = window.open('', '', 'width=400,height=300');
+        popupWindow.document.write(popupHTML);
+
+        // Add event listener to handle option selection
+        await new Promise((resolve) => {
+          popupWindow.document.addEventListener('click', function (event) {
+            var selectedInput = event.target.closest('input[type="radio"]');
+            if (selectedInput) {
+              var selectedOption = selectedInput.value;
+              inputElements.forEach(function (input) {
+                if (input.getAttribute('data-test-text-selectable-option__input') === selectedOption) {
+                  input.checked = true;
+                  var changeEvent = new Event('change', { bubbles: true });
+                  input.parentElement.children[0].dispatchEvent(changeEvent);
+                }
+              });
+              // Close the popup window after handling selection
+              popupWindow.close();
+              resolve();
             }
           });
-    
-          if (!isAnyInputSelected) {
-            var options = [];
-            inputElements.forEach(function (input) {
-              options.push(input.getAttribute('data-test-text-selectable-option__input'));
-            });
-            // Create popup.html with question and options
-            var popupHTML = `
-              <h3>${textContent}</h3>
-              <ul>
-                ${options.map(option => `
-                  <li>
-                    <div style="border: 1px solid black; padding: 5px; margin-bottom: 5px;">
-                      <label>
-                        <input type="radio" name="${textContent}" value="${option}" />
-                        ${option}
-                      </label>
-                    </div>
-                  </li>
-                `).join('')}
-              </ul>
-            `;
-            // Open the popup.html in a new window
-            var popupWindow = window.open('', '', 'width=400,height=300');
-            popupWindow.document.write(popupHTML);
-    
-            // Add event listener to handle option selection
-            await new Promise((resolve) => {
-              popupWindow.document.addEventListener('click', function (event) {
-                var selectedInput = event.target.closest('input[type="radio"]');
+        });
+      }
+    }
+    // handles dropdown questions
+    var dropdownLabels = questionDiv.querySelectorAll('.fb-dash-form-element[data-test-form-element] label[for^="text-entity-list-form-component"]');
+    for (const label of dropdownLabels) {
+      var labelText = label.textContent.trim();
+      var splitIndex = Math.floor(labelText.length / 2);
+      labelText = labelText.substring(0, splitIndex).trim();
+      console.log('Dropdown Question:', labelText);
+      var multipleChoiceSelector = questionDiv.querySelector('select');
+      if (multipleChoiceSelector) {
+        var multipleChoiceOptions = multipleChoiceSelector.querySelectorAll('option');
+        var selectedOption = multipleChoiceSelector.value.toLowerCase();
+        if (selectedOption === 'select an option' || selectedOption === '') {
+          var options = [];
+          multipleChoiceOptions.forEach(function (multipleChoiceOption) {
+            var multipleChoiceOptionText = multipleChoiceOption.textContent.trim();
+            if (multipleChoiceOptionText.toLowerCase() !== 'select an option' && multipleChoiceOptionText !== '') {
+              options.push(multipleChoiceOptionText);
+            }
+          });
+          // Create popup.html with question and options
+          var popupHTML = `
+            <h3>${labelText}</h3>
+            <ul>
+              ${options.map(option => `
+                <li>
+                  <div style="border: 1px solid black; padding: 5px; margin-bottom: 5px;" data-option="${option}">
+                    <label>
+                      <input type="radio" name="${labelText}" value="${option}" />
+                      ${option}
+                    </label>
+                  </div>
+                </li>
+              `).join('')}
+            </ul>
+          `;
+          // Open the popup.html in a new window
+          var popupWindow = window.open('', '', 'width=400,height=300');
+          popupWindow.document.write(popupHTML);
+
+          // Add event listener to handle option selection
+          await new Promise((resolve) => {
+            popupWindow.document.addEventListener('click', function (event) {
+              var selectedDiv = event.target.closest('div[data-option]');
+              if (selectedDiv) {
+                var selectedInput = selectedDiv.querySelector('input[type="radio"]');
                 if (selectedInput) {
                   var selectedOption = selectedInput.value;
-                  inputElements.forEach(function (input) {
-                    if (input.getAttribute('data-test-text-selectable-option__input') === selectedOption) {
-                      input.checked = true;
-                      var changeEvent = new Event('change', { bubbles: true });
-                      input.parentElement.children[0].dispatchEvent(changeEvent);
-                    }
-                  });
+                  multipleChoiceSelector.value = selectedOption;
+                  // Trigger change event on the original select element
+                  var changeEvent = new Event('change');
+                  multipleChoiceSelector.dispatchEvent(changeEvent);
                   // Close the popup window after handling selection
                   popupWindow.close();
                   resolve();
                 }
-              });
+              }
             });
-          }
+          });
         }
-        // handles dropdown questions
-        var dropdownLabels = questionDiv.querySelectorAll('.fb-dash-form-element[data-test-form-element] label[for^="text-entity-list-form-component"]');
-        for (const label of dropdownLabels) {
-          var labelText = label.textContent.trim();
-          var splitIndex = Math.floor(labelText.length / 2);
-          labelText = labelText.substring(0, splitIndex).trim();
-          console.log('Dropdown Question:', labelText);
-          var multipleChoiceSelector = questionDiv.querySelector('select');
-          if (multipleChoiceSelector) {
-            var multipleChoiceOptions = multipleChoiceSelector.querySelectorAll('option');
-            var selectedOption = multipleChoiceSelector.value.toLowerCase();
-            if (selectedOption === 'select an option' || selectedOption === '') {
-              var options = [];
-              multipleChoiceOptions.forEach(function (multipleChoiceOption) {
-                var multipleChoiceOptionText = multipleChoiceOption.textContent.trim();
-                if (multipleChoiceOptionText.toLowerCase() !== 'select an option' && multipleChoiceOptionText !== '') {
-                  options.push(multipleChoiceOptionText);
-                }
-              });
-              // Create popup.html with question and options
-              var popupHTML = `
-                <h3>${labelText}</h3>
-                <ul>
-                  ${options.map(option => `
-                    <li>
-                      <div style="border: 1px solid black; padding: 5px; margin-bottom: 5px;" data-option="${option}">
-                        <label>
-                          <input type="radio" name="${labelText}" value="${option}" />
-                          ${option}
-                        </label>
-                      </div>
-                    </li>
-                  `).join('')}
-                </ul>
-              `;
-              // Open the popup.html in a new window
-              var popupWindow = window.open('', '', 'width=400,height=300');
-              popupWindow.document.write(popupHTML);
-    
-              // Add event listener to handle option selection
-              await new Promise((resolve) => {
-                popupWindow.document.addEventListener('click', function (event) {
-                  var selectedDiv = event.target.closest('div[data-option]');
-                  if (selectedDiv) {
-                    var selectedInput = selectedDiv.querySelector('input[type="radio"]');
-                    if (selectedInput) {
-                      var selectedOption = selectedInput.value;
-                      multipleChoiceSelector.value = selectedOption;
-                      // Trigger change event on the original select element
-                      var changeEvent = new Event('change');
-                      multipleChoiceSelector.dispatchEvent(changeEvent);
-                      // Close the popup window after handling selection
-                      popupWindow.close();
-                      resolve();
-                    }
-                  }
-                });
-              });
-            }
-          }
-        }
-        resolve();
-      });
-    }    
+      }
+    }
+  }    
   
   function exitJob() {
     return new Promise((resolve) => {
       let attempts = 0;
       const maxAttempts = 16;
-
+      
       const intervalId = setInterval(() => {
         if (document.querySelector('h2#post-apply-modal')) {
           const buttons = document.querySelectorAll('button span.artdeco-button__text');
@@ -348,73 +324,65 @@ function clickButtonOnPage() {
           if (doneButton) {
             doneButton.click();
             clearInterval(intervalId); // Stop checking once the button is found and clicked
-            resolve(); // Resolve the promise after clicking the "Done" button
           } else {
             const dismissButton = document.querySelector('button.artdeco-modal__dismiss');
             if (dismissButton) {
               dismissButton.click();
               clearInterval(intervalId); // Stop checking once the button is found and clicked
-              resolve(); // Resolve the promise after clicking the dismiss button
             }
           }
         }
-
         attempts++;
         if (attempts >= maxAttempts) {
           clearInterval(intervalId); // Stop checking after 16 unsuccessful attempts
-          resolve(); // Resolve the promise if the button is not found after the maximum attempts
         }
       }, 500); // Check every 500 milliseconds
+      resolve();
     });
   }
 
   async function applyForJob() {
-    return new Promise(async (resolve) => {
-      dismissJobsApplied();
-      removeDismissedJobs();
-      removeAppliedJobs();
+      // dismissJobsApplied();
+      // removeDismissedJobs();
+      // removeAppliedJobs();
       try {
-        await clickAndWait('.jobs-apply-button.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view', 5011);
+        await clickAndWait('.jobs-apply-button.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view');
         // pressWithRetry('.jobs-apply-button.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view');
       } catch (error) {
         console.log('Apply button not found');
       }
+      await delay(1000);
+      console.log('GOT TO AFTER pressing EASY APPLY BUTTON');
       while (true) {
-        try {
+        try{
           await processQuestions('div.jobs-easy-apply-form-section__grouping');
-        } catch (error) {
-          console.log('Questions not found');
-        }
-        try {
           await clickAndWait('button[aria-label="Continue to next step"]', 3000);
         } catch (error) {
-          console.log('Continue button not found');
+          console.log('Questions not found');
           break; // Exit the loop if the "Continue to next step" button is not found
         }
       }
-      while (true) {
-        try {
-          await processQuestions('div.jobs-easy-apply-form-section__grouping');
-        } catch (error) {
-          console.log('Questions not found');
-        }
-        try {
-          await clickAndWait('button[aria-label="Review your application"]', 3000);
-        } catch (error) {
-          console.log('Review button not found');
-          break; // Exit the loop if the "Review your application" button is not found
-        }
-      }
+      // while (true) {
+      //   try {
+      //     await processQuestions('div.jobs-easy-apply-form-section__grouping');
+      //   } catch (error) {
+      //     console.log('Questions not found');
+      //   }
+      //   try {
+      //     await clickAndWait('button[aria-label="Review your application"]', 3000);
+      //   } catch (error) {
+      //     console.log('Review button not found');
+      //     break; // Exit the loop if the "Review your application" button is not found
+      //   }
+      // }
 
-      try {
-        uncheckCheckbox('#follow-company-checkbox');
-        await clickAndWait('button[aria-label="Submit application"]', 3000);
-        await exitJob(); // Wait for exitJob to complete before resolving the promise
-      } catch (error) {
-        console.log('Submit button not found');
-      }
-      resolve();
-    });
+      // try {
+      //   uncheckCheckbox('#follow-company-checkbox');
+      //   await clickAndWait('button[aria-label="Submit application"]', 3000);
+      //   await exitJob(); // Wait for exitJob to complete before resolving the promise
+      // } catch (error) {
+      //   console.log('Submit button not found');
+      // }
   }
 
   async function applyForAllJobs() {
@@ -431,9 +399,10 @@ function clickButtonOnPage() {
     }
   }
   
-  dismissJobsApplied();
-  removeDismissedJobs();
-  removeAppliedJobs();
-  applyForAllJobs();
+  // dismissJobsApplied();
+  // removeDismissedJobs();
+  // removeAppliedJobs();
+  // applyForAllJobs();
+  applyForJob();
 }
   
