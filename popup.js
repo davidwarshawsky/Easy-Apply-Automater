@@ -347,9 +347,6 @@ function clickButtonOnPage() {
   }
 
   async function applyForJob() {
-      // dismissJobsApplied();
-      // removeDismissedJobs();
-      // removeAppliedJobs();
       try {
         // wait for 2 seconds
         await delay(2000);
@@ -357,6 +354,11 @@ function clickButtonOnPage() {
         // pressWithRetry('.jobs-apply-button.artdeco-button.artdeco-button--3.artdeco-button--primary.ember-view');
       } catch (error) {
         console.log('Apply button not found');
+      }
+      try{
+        await clickAndWait('button[aria-label="Continue to next step"]', 3000);
+      } catch (error) {
+        console.log('Continue to next step button not found');
       }
       await delay(1000);
       console.log('GOT TO AFTER pressing EASY APPLY BUTTON');
@@ -401,13 +403,6 @@ function clickButtonOnPage() {
           break;
         }
       }
-
-      // try {
-      //   
-      //   
-      // } catch (error) {
-      //   console.log('Submit button not found');
-      // }
   }
 
   async function applyForAllJobs() {
@@ -424,11 +419,51 @@ function clickButtonOnPage() {
       }
     }
   }
+
+  async function goToNextPage() {
+    // assumes you start from page 1.
+    // Get the pagination container
+    const paginationContainer = document.querySelector('div.jobs-search-results-list__pagination');
   
-  dismissJobsApplied();
-  removeDismissedJobs();
-  removeAppliedJobs();
-  // applyForJob();
-  applyForAllJobs();
+    if (paginationContainer) {
+      // Get the list of page buttons
+      const pageButtons = paginationContainer.querySelectorAll('li.artdeco-pagination__indicator--number button');
+  
+      // Find the current page button
+      const currentPageButton = Array.from(pageButtons).find(button => button.getAttribute('aria-current') === 'true');
+  
+      if (currentPageButton) {
+        // Update the current page number
+        currentPage = parseInt(currentPageButton.textContent, 10);
+        console.log('Current page:', currentPage);
+      }
+  
+      // Find the next page button
+      const nextPageButton = Array.from(pageButtons).find(button => parseInt(button.textContent, 10) === currentPage + 1);
+  
+      if (nextPageButton) {
+        // Click the next page button
+        nextPageButton.click();
+        // Update the current page number
+        currentPage++;
+      } else {
+        console.log('Next page button not found');
+      }
+    } else {
+      console.log('Pagination container not found');
+    }
+  }
+  let currentPage = 1;
+  async function applyManyPages() {
+    let currentPage = 1;
+    for (let i = 0; i < 5; i++) {
+      await dismissJobsApplied();
+      await removeDismissedJobs();
+      await removeAppliedJobs();
+      await applyForAllJobs();
+      await goToNextPage();
+    }
+  }
+  applyManyPages();
 }
   
