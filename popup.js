@@ -159,16 +159,27 @@ function clickButtonOnPage() {
       if (inputBox) {
         var inputValue = inputBox.value;
         if (inputValue === '' || inputValue === null) {
-          await new Promise((resolve) => {
-            setTimeout(() => {
-              var newInputValue = prompt('Please enter a value:\n' + labelText);
-              inputBox.value = newInputValue;
-              // Trigger input event to simulate user input
-              var inputEvent = new Event('input', { bubbles: true });
-              inputBox.dispatchEvent(inputEvent);
-              resolve();
-            }, 0);
-          });
+          // Check if the answer has been saved before
+          var savedAnswer = localStorage.getItem(labelText);
+          if (savedAnswer) {
+            inputBox.value = savedAnswer;
+            // Trigger input event to simulate user input
+            var inputEvent = new Event('input', { bubbles: true });
+            inputBox.dispatchEvent(inputEvent);
+          } else {
+            await new Promise((resolve) => {
+              setTimeout(() => {
+                var newInputValue = prompt('Please enter a value:\n' + labelText);
+                inputBox.value = newInputValue;
+                // Trigger input event to simulate user input
+                var inputEvent = new Event('input', { bubbles: true });
+                inputBox.dispatchEvent(inputEvent);
+                // Save the answer for future use
+                localStorage.setItem(labelText, newInputValue);
+                resolve();
+              }, 0);
+            });
+          }
         }
       }
       console.log('Current Value:', inputBox.value);
@@ -197,79 +208,30 @@ function clickButtonOnPage() {
       });
 
       if (!isAnyInputSelected) {
-        var options = [];
-        inputElements.forEach(function (input) {
-          options.push(input.getAttribute('data-test-text-selectable-option__input'));
-        });
-        // Create popup.html with question and options
-        var popupHTML = `
-          <h3>${textContent}</h3>
-          <ul>
-            ${options.map(option => `
-              <li>
-                <div style="border: 1px solid black; padding: 5px; margin-bottom: 5px;">
-                  <label>
-                    <input type="radio" name="${textContent}" value="${option}" />
-                    ${option}
-                  </label>
-                </div>
-              </li>
-            `).join('')}
-          </ul>
-        `;
-        // Open the popup.html in a new window
-        var popupWindow = window.open('', '', 'width=400,height=300');
-        popupWindow.document.write(popupHTML);
-
-        // Add event listener to handle option selection
-        await new Promise((resolve) => {
-          popupWindow.document.addEventListener('click', function (event) {
-            var selectedInput = event.target.closest('input[type="radio"]');
-            if (selectedInput) {
-              var selectedOption = selectedInput.value;
-              inputElements.forEach(function (input) {
-                if (input.getAttribute('data-test-text-selectable-option__input') === selectedOption) {
-                  input.checked = true;
-                  var changeEvent = new Event('change', { bubbles: true });
-                  input.parentElement.children[0].dispatchEvent(changeEvent);
-                }
-              });
-              // Close the popup window after handling selection
-              popupWindow.close();
-              resolve();
+        // Check if the answer has been saved before
+        var savedAnswer = localStorage.getItem(textContent);
+        if (savedAnswer) {
+          inputElements.forEach(function (input) {
+            if (input.getAttribute('data-test-text-selectable-option__input') === savedAnswer) {
+              input.checked = true;
+              var changeEvent = new Event('change', { bubbles: true });
+              input.parentElement.children[0].dispatchEvent(changeEvent);
             }
           });
-        });
-      }
-    }
-    // handles dropdown questions
-    var dropdownLabels = questionDiv.querySelectorAll('.fb-dash-form-element[data-test-form-element] label[for^="text-entity-list-form-component"]');
-    for (const label of dropdownLabels) {
-      var labelText = label.textContent.trim();
-      var splitIndex = Math.floor(labelText.length / 2);
-      labelText = labelText.substring(0, splitIndex).trim();
-      console.log('Dropdown Question:', labelText);
-      var multipleChoiceSelector = questionDiv.querySelector('select');
-      if (multipleChoiceSelector) {
-        var multipleChoiceOptions = multipleChoiceSelector.querySelectorAll('option');
-        var selectedOption = multipleChoiceSelector.value.toLowerCase();
-        if (selectedOption === 'select an option' || selectedOption === '') {
+        } else {
           var options = [];
-          multipleChoiceOptions.forEach(function (multipleChoiceOption) {
-            var multipleChoiceOptionText = multipleChoiceOption.textContent.trim();
-            if (multipleChoiceOptionText.toLowerCase() !== 'select an option' && multipleChoiceOptionText !== '') {
-              options.push(multipleChoiceOptionText);
-            }
+          inputElements.forEach(function (input) {
+            options.push(input.getAttribute('data-test-text-selectable-option__input'));
           });
           // Create popup.html with question and options
           var popupHTML = `
-            <h3>${labelText}</h3>
+            <h3>${textContent}</h3>
             <ul>
               ${options.map(option => `
                 <li>
-                  <div style="border: 1px solid black; padding: 5px; margin-bottom: 5px;" data-option="${option}">
+                  <div style="border: 1px solid black; padding: 5px; margin-bottom: 5px;">
                     <label>
-                      <input type="radio" name="${labelText}" value="${option}" />
+                      <input type="radio" name="${textContent}" value="${option}" />
                       ${option}
                     </label>
                   </div>
@@ -284,22 +246,96 @@ function clickButtonOnPage() {
           // Add event listener to handle option selection
           await new Promise((resolve) => {
             popupWindow.document.addEventListener('click', function (event) {
-              var selectedDiv = event.target.closest('div[data-option]');
-              if (selectedDiv) {
-                var selectedInput = selectedDiv.querySelector('input[type="radio"]');
-                if (selectedInput) {
-                  var selectedOption = selectedInput.value;
-                  multipleChoiceSelector.value = selectedOption;
-                  // Trigger change event on the original select element
-                  var changeEvent = new Event('change');
-                  multipleChoiceSelector.dispatchEvent(changeEvent);
-                  // Close the popup window after handling selection
-                  popupWindow.close();
-                  resolve();
-                }
+              var selectedInput = event.target.closest('input[type="radio"]');
+              if (selectedInput) {
+                var selectedOption = selectedInput.value;
+                inputElements.forEach(function (input) {
+                  if (input.getAttribute('data-test-text-selectable-option__input') === selectedOption) {
+                    input.checked = true;
+                    var changeEvent = new Event('change', { bubbles: true });
+                    input.parentElement.children[0].dispatchEvent(changeEvent);
+                  }
+                });
+                // Close the popup window after handling selection
+                popupWindow.close();
+                // Save the answer for future use
+                localStorage.setItem(textContent, selectedOption);
+                resolve();
               }
             });
           });
+        }
+      }
+    }
+    // handles dropdown questions
+    var dropdownLabels = questionDiv.querySelectorAll('.fb-dash-form-element[data-test-form-element] label[for^="text-entity-list-form-component"]');
+    for (const label of dropdownLabels) {
+      var labelText = label.textContent.trim();
+      var splitIndex = Math.floor(labelText.length / 2);
+      labelText = labelText.substring(0, splitIndex).trim();
+      console.log('Dropdown Question:', labelText);
+      var multipleChoiceSelector = questionDiv.querySelector('select');
+      if (multipleChoiceSelector) {
+        var multipleChoiceOptions = multipleChoiceSelector.querySelectorAll('option');
+        var selectedOption = multipleChoiceSelector.value.toLowerCase();
+        if (selectedOption === 'select an option' || selectedOption === '') {
+          // Check if the answer has been saved before
+          var savedAnswer = localStorage.getItem(labelText);
+          if (savedAnswer) {
+            multipleChoiceSelector.value = savedAnswer;
+            // Trigger change event on the original select element
+            var changeEvent = new Event('change');
+            multipleChoiceSelector.dispatchEvent(changeEvent);
+          } else {
+            var options = [];
+            multipleChoiceOptions.forEach(function (multipleChoiceOption) {
+              var multipleChoiceOptionText = multipleChoiceOption.textContent.trim();
+              if (multipleChoiceOptionText.toLowerCase() !== 'select an option' && multipleChoiceOptionText !== '') {
+                options.push(multipleChoiceOptionText);
+              }
+            });
+            // Create popup.html with question and options
+            var popupHTML = `
+              <h3>${labelText}</h3>
+              <ul>
+                ${options.map(option => `
+                  <li>
+                    <div style="border: 1px solid black; padding: 5px; margin-bottom: 5px;" data-option="${option}">
+                      <label>
+                        <input type="radio" name="${labelText}" value="${option}" />
+                        ${option}
+                      </label>
+                    </div>
+                  </li>
+                `).join('')}
+              </ul>
+            `;
+            // Open the popup.html in a new window
+            var popupWindow = window.open('', '', 'width=400,height=300');
+            popupWindow.document.write(popupHTML);
+
+            // Add event listener to handle option selection
+            await new Promise((resolve) => {
+              popupWindow.document.addEventListener('click', function (event) {
+                var selectedDiv = event.target.closest('div[data-option]');
+                if (selectedDiv) {
+                  var selectedInput = selectedDiv.querySelector('input[type="radio"]');
+                  if (selectedInput) {
+                    var selectedOption = selectedInput.value;
+                    multipleChoiceSelector.value = selectedOption;
+                    // Trigger change event on the original select element
+                    var changeEvent = new Event('change');
+                    multipleChoiceSelector.dispatchEvent(changeEvent);
+                    // Close the popup window after handling selection
+                    popupWindow.close();
+                    // Save the answer for future use
+                    localStorage.setItem(labelText, selectedOption);
+                    resolve();
+                  }
+                }
+              });
+            });
+          }
         }
       }
     }
