@@ -130,14 +130,6 @@ function clickButtonOnPage() {
       resolve();
     });
   }
-// if (!isAnyInputSelected) {
-//   inputElements.forEach(function(input) {
-//     var inputText = input.getAttribute('data-test-text-selectable-option__input');
-//     if (inputText.toLowerCase() === "i don't wish to answer") {
-//       input.click();
-//     }
-//   });
-// }
   async function processQuestions(selector) {
     const questionDivs = document.querySelectorAll(selector);
     if (!questionDivs) {
@@ -458,8 +450,8 @@ function clickButtonOnPage() {
     let currentPage = 1;
     for (let i = 0; i < 5; i++) {
       await dismissJobsApplied();
-      await removeDismissedJobs();
-      await removeAppliedJobs();
+      // await removeDismissedJobs();
+      // await removeAppliedJobs();
       await applyForAllJobs();
       await goToNextPage();
     }
