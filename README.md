@@ -6,6 +6,14 @@ https://www.youtube.com/watch?v=rzBlQcF-I4E
 
 This Chrome extension streamlines the job application process on LinkedIn by automating certain actions. Below are the key files:
 
+##Future Features
+1. Scroll to load all jobs on page when first starting.
+2. Go to next page of jobs.
+3. Save questions and answers for later.
+4. Fix timing to be exact for clicking of buttons.
+5. Random timing just to be safe. 
+
+
 ## Files
 
 ### 1. Popup.html
