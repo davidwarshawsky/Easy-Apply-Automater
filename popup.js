@@ -160,7 +160,7 @@ function clickButtonOnPage() {
         var inputValue = inputBox.value;
         if (inputValue === '' || inputValue === null) {
           // Check if the answer has been saved before
-          var savedAnswer = localStorage.getItem(labelText);
+          var savedAnswer = localStorage.getItem(`text_${labelText}`);
           if (savedAnswer) {
             inputBox.value = savedAnswer;
             // Trigger input event to simulate user input
@@ -175,7 +175,7 @@ function clickButtonOnPage() {
                 var inputEvent = new Event('input', { bubbles: true });
                 inputBox.dispatchEvent(inputEvent);
                 // Save the answer for future use
-                localStorage.setItem(labelText, newInputValue);
+                localStorage.setItem(`text_${labelText}`, newInputValue);
                 resolve();
               }, 0);
             });
@@ -209,7 +209,7 @@ function clickButtonOnPage() {
 
       if (!isAnyInputSelected) {
         // Check if the answer has been saved before
-        var savedAnswer = localStorage.getItem(textContent);
+        var savedAnswer = localStorage.getItem(`radio_${textContent}`);
         if (savedAnswer) {
           inputElements.forEach(function (input) {
             if (input.getAttribute('data-test-text-selectable-option__input') === savedAnswer) {
@@ -259,7 +259,7 @@ function clickButtonOnPage() {
                 // Close the popup window after handling selection
                 popupWindow.close();
                 // Save the answer for future use
-                localStorage.setItem(textContent, selectedOption);
+                localStorage.setItem(`radio_${textContent}`, selectedOption);
                 resolve();
               }
             });
@@ -280,7 +280,7 @@ function clickButtonOnPage() {
         var selectedOption = multipleChoiceSelector.value.toLowerCase();
         if (selectedOption === 'select an option' || selectedOption === '') {
           // Check if the answer has been saved before
-          var savedAnswer = localStorage.getItem(labelText);
+          var savedAnswer = localStorage.getItem(`dropdown_${labelText}`);
           if (savedAnswer) {
             multipleChoiceSelector.value = savedAnswer;
             // Trigger change event on the original select element
@@ -329,7 +329,7 @@ function clickButtonOnPage() {
                     // Close the popup window after handling selection
                     popupWindow.close();
                     // Save the answer for future use
-                    localStorage.setItem(labelText, selectedOption);
+                    localStorage.setItem(`dropdown_${labelText}`, selectedOption);
                     resolve();
                   }
                 }
@@ -440,7 +440,6 @@ function clickButtonOnPage() {
       if (jobCards) {
         for (const jobCard of jobCards) {
           jobCard.click();
-          
           await applyForJob();
           await new Promise(resolve => setTimeout(resolve, 2222));
         }
