@@ -450,8 +450,8 @@ function clickButtonOnPage() {
     let currentPage = 1;
     for (let i = 0; i < 5; i++) {
       await dismissJobsApplied();
-      // await removeDismissedJobs();
-      // await removeAppliedJobs();
+      await removeDismissedJobs();
+      await removeAppliedJobs();
       await applyForAllJobs();
       await goToNextPage();
     }
