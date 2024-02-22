@@ -18,6 +18,56 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+
+document.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('removeOldButton').addEventListener('click', () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      chrome.scripting.executeScript({
+        target: { tabId: tabs[0].id },
+        function: removeOldJobs
+      });
+    });
+  });
+});
+
+async function removeOldJobs() {
+  function removeAppliedJobs() {
+    return new Promise((resolve) => {
+      var jobsResultsList = document.querySelector('div.jobs-search-results-list');
+      if (jobsResultsList) {
+        var liJobList = document.querySelectorAll('li.jobs-search-results__list-item');
+        if (liJobList){
+          for (const liJobCard of liJobList) {
+            var jobCardStatus = liJobCard.querySelector('ul.job-card-list__footer-wrapper li.job-card-container__footer-job-state');
+            if (jobCardStatus) {
+              var jobCardStatusText = jobCardStatus.textContent.trim();
+              if (jobCardStatusText === 'Applied') {
+                liJobCard.remove();
+              }
+            }
+          }
+        }
+      }
+      resolve();
+    });
+  }
+  
+  function removeDismissedJobs() {
+    return new Promise((resolve) => {
+      var lijobList = document.querySelectorAll('li.jobs-search-results__list-item');
+      for (const lijob of lijobList) {
+        if (lijob.querySelector('div.job-card-container--clickable.job-card-list--is-dismissed')){
+          lijob.remove();
+        }
+      }
+      resolve();
+    });
+  }
+  
+  await removeAppliedJobs();
+  await removeDismissedJobs();
+}
+
 function clickButtonOnPage() {
   async function clickAndWait(buttonSelector, waitTime) {
       var button = document.querySelector(buttonSelector);
